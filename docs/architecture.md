@@ -40,9 +40,17 @@ Fix validation to return deliberate 4xx instead of 500s and compute leaderboard 
 Add the React pages and fetch logic for activities, teams, leaderboard, and workouts.
 Wire in loading, empty, and alert/error states after the backend is stable.
 - Activity tracking approach:
+invalid activity/team requests returning 501 instead of 4xx
+
 - Team management approach:
+Team: name, mascot, default members array
+
 - Leaderboard approach:
+leaderboard endpoint returning []
+
 - Workout suggestions approach:
+workouts suggestions returning the wrong focus/reason match
+
 
 ## Test plan
 
