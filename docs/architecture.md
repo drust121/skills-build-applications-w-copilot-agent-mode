@@ -26,24 +26,47 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 | Leaderboard | `GET /api/leaderboard` | Return teams ordered by the sum of their activity points, highest first. Each entry has `teamName`, `totalPoints`, and a 1-based `rank`. |
 | Workout suggestions | `GET /api/workouts/suggestions/:userEmail` | Recommend workouts from recent activity patterns for the matching seeded user's email address. The first suggestion's `focus` matches that user's goal or recent activity, with a `reason` explaining why. An email with no matching user returns a deliberate 4xx (for example, `404`). |
 
+## Tier boundaries and responsibilities
+
+- Presentation tier: React 19 pages and shared API-client logic in `octofit-tracker/frontend/src` render activities, teams, leaderboard, and workout suggestions. The UI should fetch from `/api/*`, display loading/empty/error states, and remain tolerant of backend validation errors.
+- Logic tier: Express + TypeScript handlers in `octofit-tracker/backend/src` own validation, business rules, and response shaping for `/api/activities`, `/api/teams`, `/api/leaderboard`, and `/api/workouts/suggestions/:userEmail`.
+- Data tier: Mongoose models and seeded fixtures in `octofit-tracker/backend/src/models` and `src/scripts/seed.ts` define the canonical schema, defaults, and persisted sample data used by the API and the frontend.
+- Boundary rule: fix the data contract first, then the API contract, and only after that move to the UI. The backend must not leak raw cast errors or 500s; the frontend must not decide the business rules.
+
+## Baseline failing tests
+
+Before implementation, the data suite failed 4 of 5 tests because model validation/defaults were missing; all 4 API tests failed because handlers were incomplete; and all 15 presentation tests failed because the pages did not load or render API data and required UI states.
+
+## Smallest safe implementation order
+
+1. Data tier first: add the required Mongoose validation and defaults on `User`, `Team`, `Activity`, and `Workout`; ensure seed data is idempotent and preserves existing users/teams.
+2. Logic tier next: implement the backend handlers for activities and teams with proper 4xx validation, then compute leaderboard totals and workout recommendations from recent activity patterns.
+3. API verification: run `npm run test:data --prefix octofit-tracker/backend` and `npm run test:api --prefix octofit-tracker/backend` until both pass before touching the UI.
+4. Presentation tier last: wire the React pages to the stable API responses and add loading, empty, and accessible error states.
+5. Final verification: run the frontend suite and build commands only after the backend contract is green.
+
 ## Implementation decisions
 
-Record your plan here before editing code.
+- Data tier decision: keep the schema authoritative.
+  Define the required Mongoose validation, default values, and seed fixtures first so that every API and UI contract has stable data to work with.
+- Logic tier decision: keep the API contract deliberate.
+  Validate bad input as `400`-level errors, reject malformed IDs cleanly, compute team points for the leaderboard, and match workout suggestions to the user's recent activity or fitness goal.
+- Presentation tier decision: render only after the backend is stable.
+  Fetch `/api/*` data, show the expected content states, and announce loading and API failures with accessible UI patterns.
+- Activity tracking approach: reject invalid `userId`/`teamId` combinations with a 4xx, compute `points` and `occurredAt` on creation, and list the created activity from the API.
+- Team management approach: require a team `name` and `mascot`, default `members` to an empty array, and persist member IDs as expected by the tests.
+- Leaderboard approach: aggregate each team's total activity points, sort descending, and assign 1-based ranks.
+- Workout suggestions approach: return the first workout matching the user's recent activity or goal, include a reason string, and return a deliberate 4xx for unknown emails.
 
-- Presentation tier decision:
-- Logic tier decision:
-- Data tier decision:
-- Activity tracking approach:
-- Team management approach:
-- Leaderboard approach:
-- Workout suggestions approach:
-
-## Test plan
-
-Record the commands you run and what each failure means.
+## Test plan and verified status
 
 - Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
+  Verified: 5 tests passed.
 - API command: `npm run test:api --prefix octofit-tracker/backend`
+  Verified: 4 tests passed.
 - Frontend command: `npm test --prefix octofit-tracker/frontend`
+  Verified: 15 tests passed.
 - Backend build command: `npm run build --prefix octofit-tracker/backend`
+  Verified: passed.
 - Frontend build command: `npm run build --prefix octofit-tracker/frontend`
+  Verified: passed.
