@@ -33,11 +33,9 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 - Data tier: Mongoose models and seeded fixtures in `octofit-tracker/backend/src/models` and `src/scripts/seed.ts` define the canonical schema, defaults, and persisted sample data used by the API and the frontend.
 - Boundary rule: fix the data contract first, then the API contract, and only after that move to the UI. The backend must not leak raw cast errors or 500s; the frontend must not decide the business rules.
 
-## Current failing tests
+## Baseline failing tests
 
-- Data contract: `npm run test:data --prefix octofit-tracker/backend` currently fails 4 of 5 tests. The root issue is missing Mongoose validation/defaults for `User`, `Team`, `Activity`, and `Workout`.
-- API contract: `npm run test:api --prefix octofit-tracker/backend` currently fails 4 of 4 tests. Invalid requests still return `501` instead of a deliberate 4xx, the leaderboard is empty, and workout suggestions do not match the user's activity pattern.
-- Presentation contract: `npm test --prefix octofit-tracker/frontend` currently fails all 15 tests. The app is not rendering the expected activity/team/leaderboard/workout content and is missing the required loading and alert/error states.
+Before implementation, the data suite failed 4 of 5 tests because model validation/defaults were missing; all 4 API tests failed because handlers were incomplete; and all 15 presentation tests failed because the pages did not load or render API data and required UI states.
 
 ## Smallest safe implementation order
 
@@ -60,14 +58,15 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 - Leaderboard approach: aggregate each team's total activity points, sort descending, and assign 1-based ranks.
 - Workout suggestions approach: return the first workout matching the user's recent activity or goal, include a reason string, and return a deliberate 4xx for unknown emails.
 
-## Test plan and current status
+## Test plan and verified status
 
 - Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
-  Current status: failing — 4 of 5 tests are red because validation/default behavior is missing from the data layer.
+  Verified: 5 tests passed.
 - API command: `npm run test:api --prefix octofit-tracker/backend`
-  Current status: failing — all 4 tests are red because the handlers return `501` and empty/incorrect payloads instead of the documented API contract.
+  Verified: 4 tests passed.
 - Frontend command: `npm test --prefix octofit-tracker/frontend`
-  Current status: failing — 15 of 15 tests are red because the presentation layer is not fetching or rendering the backend contract correctly.
+  Verified: 15 tests passed.
 - Backend build command: `npm run build --prefix octofit-tracker/backend`
+  Verified: passed.
 - Frontend build command: `npm run build --prefix octofit-tracker/frontend`
-  These build commands should be used only after the data and API contracts are green; they are not the first debugging step for the current failures.
+  Verified: passed.
