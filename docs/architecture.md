@@ -56,8 +56,14 @@ workouts suggestions returning the wrong focus/reason match
 
 Record the commands you run and what each failure means.
 
-- Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
+- Data-tier command: `npm run test:data --prefix octofit-tracker/backend` 
+Test plan : 
+first tests Data
 - API command: `npm run test:api --prefix octofit-tracker/backend`
+Test plan : 
+second tests API
 - Frontend command: `npm test --prefix octofit-tracker/frontend`
+Test plan : 
+thrid tests frontend
 - Backend build command: `npm run build --prefix octofit-tracker/backend`
 - Frontend build command: `npm run build --prefix octofit-tracker/frontend`
